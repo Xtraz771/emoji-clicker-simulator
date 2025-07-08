@@ -1,1 +1,210 @@
-# emoji-clicker-simulator
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+  <meta charset="UTF-8">  
+  <title>Emoji Clicker Simulator 🤑</title>  
+  <meta name="viewport" content="width=device-width, initial-scale=1">  
+  <style>  
+    body {  
+      font-family: Arial, sans-serif;  
+      background-color: #000;  
+      color: #fff;  
+      text-align: center;  
+      padding: 20px;  
+    }  
+    .dev-icon { color: #ff0; }  
+    .admin-btn {  
+      background: #ff0;  
+      color: #000;  
+      margin: 5px;  
+      font-weight: bold;  
+      padding: 8px 12px;  
+    }  
+    .emoji {  
+      font-size: 64px;  
+      cursor: pointer;  
+      border: none;  
+      background: none;  
+      margin-top: 30px;  
+    }  
+    .box {  
+      margin: 20px auto;  
+      max-width: 420px;  
+      background: #111;  
+      padding: 15px;  
+      border-radius: 10px;  
+    }  
+    input, button {  
+      padding: 10px;  
+      font-size: 16px;  
+      margin: 5px;  
+      border-radius: 5px;  
+      border: none;  
+    }  
+    button {  
+      background-color: #33ff33;  
+      color: #000;  
+      font-weight: bold;  
+      cursor: pointer;  
+    }  
+    footer {  
+      margin-top: 30px;  
+      font-size: 14px;  
+      color: #888;  
+    }  
+    footer a {  
+      color: #00ffff;  
+      text-decoration: none;  
+    }  
+    #leaderboardList {  
+      text-align: left;  
+      padding: 10px;  
+    }  
+  </style>  
+</head>  
+<body>  
+  <h1>🤑 Emoji Clicker Simulator</h1>  
+  <div class="box" id="authBox">  
+    <input type="text" id="username" placeholder="Username"><br>  
+    <input type="password" id="password" placeholder="Password"><br>  
+    <button onclick="login()">Login</button>  
+    <button onclick="signup()">Sign Up</button>  
+  </div>    <div class="box" id="gameBox" style="display:none">  
+    <p>Welcome, <span id="currentUser"></span> <span id="devIcon"></span> <button onclick="logout()">Logout</button></p>  
+    <p>💵 Coins: <span id="clicks">0</span></p>  
+    <p>🏅 Rank: <span id="rank">Beginner</span></p>  
+    <p>💠 Prestige: <span id="prestige">0</span></p>  
+    <p>🎨 Skin: <span id="skin">Default</span></p>  
+    <button class="emoji" onclick="clickEmoji()">🤑</button>  
+    <button onclick="prestige()">🔁 Prestige</button>  
+  </div>    <div class="box" id="leaderboardBox" style="display:none">  
+    <h3>🏆 Leaderboard</h3>  
+    <div id="leaderboardList"></div>  
+  </div>    <div class="box" id="adminBox" style="display:none">  
+    <h3>🛠️ Developer Panel</h3>  
+    <button class="admin-btn" onclick="giveAllCoins()">💰 Give All 9999 Coins</button>  
+    <button class="admin-btn" onclick="resetAll()">🧨 Reset All Users</button>  
+    <button class="admin-btn" onclick="broadcastMessage()">📢 Broadcast Message</button>  
+  </div>    <footer>  
+    👨‍💻 Created by <a href="https://www.facebook.com/share/1FDL1Wz8sJ/" target="_blank">Xtraz</a>  
+  </footer>    <script>  
+    let currentUser = null;  
+    let userData = {};  
+  
+    function signup() {  
+      const u = document.getElementById("username").value;  
+      const p = document.getElementById("password").value;  
+      if (!u || !p) return alert("Enter username and password");  
+      if (localStorage.getItem(`user_${u}`)) return alert("User already exists!");  
+      localStorage.setItem(`user_${u}`, JSON.stringify({ password: p, coins: 0, prestige: 0, skin: "Default", isDev: u.toLowerCase() === "xtraz" }));  
+      alert("Account created. Please login.");  
+    }  
+  
+    function login() {  
+      const u = document.getElementById("username").value;  
+      const p = document.getElementById("password").value;  
+      const saved = localStorage.getItem(`user_${u}`);  
+      if (!saved) return alert("User not found");  
+      const parsed = JSON.parse(saved);  
+      if (parsed.password !== p) return alert("Wrong password");  
+      currentUser = u;  
+      userData = parsed;  
+      loadUser();  
+    }  
+  
+    function logout() {  
+      currentUser = null;  
+      userData = {};  
+      location.reload();  
+    }  
+  
+    function saveData() {  
+      if (!currentUser) return;  
+      localStorage.setItem(`user_${currentUser}`, JSON.stringify(userData));  
+    }  
+  
+    function loadUser() {  
+      document.getElementById("authBox").style.display = "none";  
+      document.getElementById("gameBox").style.display = "block";  
+      document.getElementById("leaderboardBox").style.display = "block";  
+      document.getElementById("currentUser").innerText = currentUser;  
+      document.getElementById("clicks").innerText = userData.coins;  
+      document.getElementById("rank").innerText = getRank(userData.coins);  
+      document.getElementById("prestige").innerText = userData.prestige;  
+      document.getElementById("skin").innerText = userData.skin;  
+      if (userData.isDev) {  
+        document.getElementById("adminBox").style.display = "block";  
+        document.getElementById("devIcon").innerText = "🛠️";  
+      }  
+      updateLeaderboard();  
+    }  
+  
+    function clickEmoji() {  
+      userData.coins += 1 + (userData.prestige || 0);  
+      document.getElementById("clicks").innerText = userData.coins;  
+      document.getElementById("rank").innerText = getRank(userData.coins);  
+      saveData();  
+      updateLeaderboard();  
+    }  
+  
+    function getRank(score) {  
+      if (score >= 10000) return "Ultimate";  
+      if (score >= 5000) return "Elite";  
+      if (score >= 1000) return "Pro";  
+      return "Beginner";  
+    }  
+  
+    function prestige() {  
+      if (userData.coins >= 1000) {  
+        userData.coins = 0;  
+        userData.prestige = (userData.prestige || 0) + 1;  
+        alert("You have prestiged! +1 power boost");  
+        saveData();  
+        loadUser();  
+      } else {  
+        alert("You need 1000 coins to prestige");  
+      }  
+    }  
+  
+    function giveAllCoins() {  
+      for (let key in localStorage) {  
+        if (key.startsWith("user_")) {  
+          const u = JSON.parse(localStorage.getItem(key));  
+          u.coins = 9999;  
+          localStorage.setItem(key, JSON.stringify(u));  
+        }  
+      }  
+      alert("All players received 9999 coins!");  
+      updateLeaderboard();  
+    }  
+  
+    function resetAll() {  
+      if (confirm("Delete all player data?")) {  
+        for (let key in localStorage) {  
+          if (key.startsWith("user_")) localStorage.removeItem(key);  
+        }  
+        location.reload();  
+      }  
+    }  
+  
+    function broadcastMessage() {  
+      const msg = prompt("Enter broadcast message:");  
+      if (msg) alert("📢 " + msg);  
+    }  
+  
+    function updateLeaderboard() {  
+      const list = [];  
+      for (let key in localStorage) {  
+        if (key.startsWith("user_")) {  
+          const name = key.replace("user_", "");  
+          try {  
+            const data = JSON.parse(localStorage.getItem(key));  
+            list.push({ name: name, coins: data.coins || 0 });  
+          } catch {}  
+        }  
+      }  
+      list.sort((a, b) => b.coins - a.coins);  
+      const html = list.slice(0, 10).map((u, i) => `<div>#${i+1} ${u.name} - 💵 ${u.coins}</div>`).join("");  
+      document.getElementById("leaderboardList").innerHTML = html;  
+    }  
+  </script>  </body>  
+</html>
